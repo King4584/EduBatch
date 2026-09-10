@@ -18,6 +18,16 @@ app.use(
   })
 );
 
+// Logging
+if (ENV.NODE_ENV !== 'test') {
+  app.use(morgan(ENV.NODE_ENV === 'development' ? 'dev' : 'combined'));
+}
+
+// Body parsing
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+
 
 const startServer = async () => {
     await connectDB();
