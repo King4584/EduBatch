@@ -1,11 +1,14 @@
 import React from 'react';
+import { BrowserRouter } from 'react-router-dom';
 
 
 export const App: React.FC = () => {
   return (
-    <div>
-        <h1>Welcome to the App</h1>
-    </div>
+    <BrowserRouter>
+        <div className="App">
+            <h1>Welcome to EduBatch</h1>
+        </div>
+    </BrowserRouter>
   )
 }
 
