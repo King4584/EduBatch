@@ -4,6 +4,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import { ENV } from './config/env.js';
 import { connectDB } from './config/db.js';
+import { apiRateLimiter } from './middleware/rateLimiter.middleware.js';
 
 const app = express();
 app.use(morgan('dev'));
@@ -26,6 +27,9 @@ if (ENV.NODE_ENV !== 'test') {
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Rate limiting for API requests
+app.use('/api', apiRateLimiter);
 
 
 
