@@ -6,6 +6,7 @@ import { ENV } from './config/env.js';
 import { connectDB } from './config/db.js';
 import v1Routes from './routes/index.js';
 import { apiRateLimiter } from './middleware/rateLimiter.middleware.js';
+import { errorHandler } from './middleware/error.middleware.js';
 
 const app = express();
 app.use(morgan('dev'));
@@ -52,6 +53,9 @@ app.use((req: Request, res: Response) => {
     errors: [],
   });
 });
+
+// Global Centralized Error Handler
+app.use(errorHandler);
 
 const startServer = async () => {
     await connectDB();
