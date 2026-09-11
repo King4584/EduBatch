@@ -4,7 +4,7 @@ import { User, IUser } from '../models/User.js';
 import { ApiError } from '../utils/apiError.js';
 import { sendResponse } from '../utils/apiResponse.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../services/token.service.js';
-// import { sendPasswordResetEmail } from '../services/email.service.js';
+import { sendPasswordResetEmail } from '../services/email.service.js';
 import { AuthRequest } from '../middleware/auth.middleware.js';
 import { ENV } from '../config/env.js';
 
@@ -164,7 +164,7 @@ export const forgotPassword = async (req: Request, res: Response, next: NextFunc
     await user.save();
 
     const resetUrl = `${ENV.CLIENT_URL}/reset-password?token=${resetToken}`;
-    // await sendPasswordResetEmail(user.email, resetUrl);
+    await sendPasswordResetEmail(user.email, resetUrl);
 
     sendResponse(res, 200, 'If this email exists in our records, a password reset link has been dispatched');
   } catch (error) {

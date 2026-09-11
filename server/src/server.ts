@@ -1,16 +1,16 @@
-import express, {Request, Response} from 'express';
-import helmet from 'helmet';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import morgan from 'morgan';
 import { ENV } from './config/env.js';
 import { connectDB } from './config/db.js';
 import v1Routes from './routes/index.js';
-import { apiRateLimiter } from './middleware/rateLimiter.middleware.js';
 import { errorHandler } from './middleware/error.middleware.js';
+import { apiRateLimiter } from './middleware/rateLimiter.middleware.js';
 
 const app = express();
-app.use(morgan('dev'));
 
+// Security middleware
 app.use(helmet());
 app.use(
   cors({
@@ -57,25 +57,26 @@ app.use((req: Request, res: Response) => {
 // Global Centralized Error Handler
 app.use(errorHandler);
 
+// Start Server
 const startServer = async () => {
-    await connectDB();
-    const server = app.listen(ENV.PORT, () => {
-      console.log(`[EduBatch Server] Running in ${ENV.NODE_ENV} mode on http://localhost:${ENV.PORT}`);
-      console.log(`[EduBatch Server] API Base: http://localhost:${ENV.PORT}/api/v1`);
+  await connectDB();
+  const server = app.listen(ENV.PORT, () => {
+    console.log(`[EduBatch Server] Running in ${ENV.NODE_ENV} mode on http://localhost:${ENV.PORT}`);
+    console.log(`[EduBatch Server] API Base: http://localhost:${ENV.PORT}/api/v1`);
+  });
+
+  // Graceful shutdown
+  const shutdown = () => {
+    console.log('[EduBatch Server] Shutting down gracefully...');
+    server.close(() => {
+      console.log('[EduBatch Server] Closed out remaining connections.');
+      process.exit(0);
     });
+  };
 
-    // Graceful shutdown
-    const shutdown = () => {
-      console.log('[EduBatch Server] Shutting down gracefully...');
-      server.close(() => {
-        console.log('[EduBatch Server] Closed out remaining connections.');
-        process.exit(0);
-      });
-
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown);
-  }
-}
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
+};
 
 startServer();
 
