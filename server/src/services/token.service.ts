@@ -36,3 +36,7 @@ export const generateRefreshToken = (user: IUser): string => {
 export const verifyRefreshToken = (token: string): TokenPayload => {
   return jwt.verify(token, ENV.REFRESH_TOKEN_SECRET) as TokenPayload;
 };
+
+export const verifyAccessToken = (token: string): TokenPayload => {
+  return jwt.verify(token, ENV.JWT_SECRET) as TokenPayload;
+};

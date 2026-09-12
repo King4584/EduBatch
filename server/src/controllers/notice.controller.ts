@@ -12,24 +12,44 @@ export const getNotices = async (req: AuthRequest, res: Response, next: NextFunc
     const userId = req.user?.id;
 
     let query: any = {};
+    const rawBatchId = req.params.batchId || req.query.batchId;
+    const targetBatchId = rawBatchId ? String(rawBatchId) : undefined;
 
-    if (userRole === 'admin') {
-      // Admin sees all notices
-      query = {};
-    } else if (userRole === 'teacher') {
-      // Teacher sees global notices (batch == null) and notices for their assigned batches
-      const assignedBatches = await Batch.find({ teacher: userId }).select('_id');
-      const batchIds = assignedBatches.map((b) => b._id);
-      query = {
-        $or: [{ batch: null }, { batch: { $in: batchIds } }],
-      };
-    } else if (userRole === 'student') {
-      // Student sees global notices (batch == null) and notices for batches they are enrolled in
-      const enrollments = await Enrollment.find({ student: userId, isActive: true }).select('batch');
-      const batchIds = enrollments.map((e) => e.batch);
-      query = {
-        $or: [{ batch: null }, { batch: { $in: batchIds } }],
-      };
+    if (targetBatchId) {
+      if (userRole === 'admin') {
+        query = { batch: targetBatchId };
+      } else if (userRole === 'teacher') {
+        const assigned = await Batch.findOne({ _id: targetBatchId, teacher: userId });
+        if (!assigned) {
+          throw ApiError.forbidden('Unauthorized to view notices for this batch');
+        }
+        query = { batch: targetBatchId };
+      } else if (userRole === 'student') {
+        const enrolled = await Enrollment.findOne({ student: userId, batch: targetBatchId, isActive: true });
+        if (!enrolled) {
+          throw ApiError.forbidden('Unauthorized to view notices for this batch');
+        }
+        query = { batch: targetBatchId };
+      }
+    } else {
+      if (userRole === 'admin') {
+        // Admin sees all notices
+        query = {};
+      } else if (userRole === 'teacher') {
+        // Teacher sees global notices (batch == null) and notices for their assigned batches
+        const assignedBatches = await Batch.find({ teacher: userId }).select('_id');
+        const batchIds = assignedBatches.map((b) => b._id);
+        query = {
+          $or: [{ batch: null }, { batch: { $in: batchIds } }],
+        };
+      } else if (userRole === 'student') {
+        // Student sees global notices (batch == null) and notices for batches they are enrolled in
+        const enrollments = await Enrollment.find({ student: userId, isActive: true }).select('batch');
+        const batchIds = enrollments.map((e) => e.batch);
+        query = {
+          $or: [{ batch: null }, { batch: { $in: batchIds } }],
+        };
+      }
     }
 
     const notices = await Notice.find(query)

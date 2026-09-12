@@ -7,6 +7,7 @@ export interface IEnrollment extends Document {
   batch: Types.ObjectId;
   enrolledAt: Date;
   paymentStatus: PaymentStatus;
+  payment?: Types.ObjectId | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -35,6 +36,11 @@ const EnrollmentSchema = new Schema<IEnrollment>(
       enum: ['pending', 'paid', 'waived'],
       default: 'pending',
       index: true,
+    },
+    payment: {
+      type: Schema.Types.ObjectId,
+      ref: 'Payment',
+      default: null,
     },
     isActive: {
       type: Boolean,

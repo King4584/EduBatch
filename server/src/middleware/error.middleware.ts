@@ -33,6 +33,14 @@ export const errorHandler = (
   } else if (err.name === 'CastError') {
     statusCode = 400;
     message = `Invalid ID format for ${err.path}`;
+  } else if (
+    err.name === 'MongooseServerSelectionError' ||
+    (err.name === 'MongooseError' && err.message?.includes('buffering timed out'))
+  ) {
+    statusCode = 503;
+    message =
+      'Database connection failed or timed out. Please ensure your IP address is whitelisted in MongoDB Atlas (Network Access -> Add IP -> 0.0.0.0/0).';
+    errors = [{ field: 'database', message: err.message }];
   } else if (err.message) {
     message = err.message;
   }

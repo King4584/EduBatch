@@ -20,6 +20,11 @@ export const enrollStudent = async (req: AuthRequest, res: Response, next: NextF
       throw ApiError.badRequest('Cannot enroll into an archived batch');
     }
 
+    // Teacher check: teacher can only enroll students in their own batch
+    if (req.user?.role === 'teacher' && targetBatch.teacher.toString() !== req.user.id) {
+      throw ApiError.forbidden('Teachers can only enroll students into their assigned batches');
+    }
+
     // Verify student exists
     const targetStudent = await User.findById(student);
     if (!targetStudent || targetStudent.role !== 'student') {
@@ -64,7 +69,21 @@ export const getEnrollments = async (req: AuthRequest, res: Response, next: Next
     const { batchId, studentId, paymentStatus, page = 1, limit = 20 } = req.query;
 
     const query: any = { isActive: true };
-    if (batchId) query.batch = batchId;
+    if (req.user?.role === 'teacher') {
+      const teacherBatches = await Batch.find({ teacher: req.user.id }).select('_id');
+      const teacherBatchIds = teacherBatches.map((b) => b._id.toString());
+      if (batchId) {
+        if (!teacherBatchIds.includes(batchId.toString())) {
+          throw ApiError.forbidden('Unauthorized access to enrollments of this batch');
+        }
+        query.batch = batchId;
+      } else {
+        query.batch = { $in: teacherBatches.map((b) => b._id) };
+      }
+    } else if (batchId) {
+      query.batch = batchId;
+    }
+
     if (studentId) query.student = studentId;
     if (paymentStatus && paymentStatus !== 'All') query.paymentStatus = paymentStatus;
 
@@ -113,10 +132,17 @@ export const getMyEnrollments = async (req: AuthRequest, res: Response, next: Ne
 export const cancelEnrollment = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const enrollment = await Enrollment.findById(id);
+    const enrollment = await Enrollment.findById(id).populate('batch');
 
     if (!enrollment) {
       throw ApiError.notFound('Enrollment record not found');
+    }
+
+    if (req.user?.role === 'teacher') {
+      const teacherId = (enrollment.batch as any)?.teacher?.toString();
+      if (teacherId !== req.user.id) {
+        throw ApiError.forbidden('Teachers can only remove enrollments from their assigned batches');
+      }
     }
 
     enrollment.isActive = false;

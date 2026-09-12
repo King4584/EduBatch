@@ -168,3 +168,65 @@ export const getMyAttendance = async (req: AuthRequest, res: Response, next: Nex
     next(error);
   }
 };
+
+export const getStudentAttendance = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const studentId = req.params.studentId;
+    if (req.user?.role === 'student' && req.user.id !== studentId) {
+      throw ApiError.forbidden('You can only view your own attendance');
+    }
+
+    const enrollments = await Enrollment.find({ student: studentId, isActive: true })
+      .populate('batch', 'name subject scheduleDays startTime endTime')
+      .lean();
+
+    const batchIds = enrollments.map((e) => e.batch?._id).filter(Boolean);
+
+    const attendanceRecords = await Attendance.find({
+      batch: { $in: batchIds },
+      'records.student': studentId,
+    })
+      .populate('batch', 'name subject')
+      .sort({ date: -1 })
+      .lean();
+
+    let presentCount = 0;
+    let absentCount = 0;
+    let lateCount = 0;
+
+    const history = attendanceRecords.map((session) => {
+      const myRecord = session.records.find((r) => r.student.toString() === studentId);
+      const status: AttendanceStatus = myRecord?.status || 'Absent';
+
+      if (status === 'Present') presentCount++;
+      else if (status === 'Absent') absentCount++;
+      else if (status === 'Late') lateCount++;
+
+      return {
+        id: session._id,
+        date: session.date,
+        batchName: (session.batch as any)?.name || 'General',
+        status,
+        remarks: myRecord?.remarks || '',
+      };
+    });
+
+    const totalSessions = presentCount + absentCount + lateCount;
+    const attendancePercentage = totalSessions > 0
+      ? Number(((presentCount / totalSessions) * 100).toFixed(1))
+      : 100;
+
+    sendResponse(res, 200, 'Student attendance summary retrieved', {
+      studentId,
+      attendancePercentage,
+      presentCount,
+      absentCount,
+      lateCount,
+      totalSessions,
+      history,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

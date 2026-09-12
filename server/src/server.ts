@@ -14,7 +14,20 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: [ENV.CLIENT_URL, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      // Allow localhost, local IP, any vercel.app deployment, or configured CLIENT_URL
+      if (
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1') ||
+        origin.endsWith('.vercel.app') ||
+        origin === ENV.CLIENT_URL
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -27,14 +40,18 @@ if (ENV.NODE_ENV !== 'test') {
 }
 
 // Body parsing
-app.use(express.json({ limit: '10mb' }));
+app.use(
+  express.json({
+    limit: '10mb',
+    verify: (req: any, _res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Rate limiting for API requests
 app.use('/api', apiRateLimiter);
-
-// API Routes
-app.use('/api/v1', v1Routes);
 
 // Root greeting
 app.get('/', (_req: Request, res: Response) => {
@@ -44,6 +61,11 @@ app.get('/', (_req: Request, res: Response) => {
     version: '1.0.0',
   });
 });
+
+// API Routes: mount at /api/v1, /api, and / so both /api/v1/auth/login and /auth/login work seamlessly!
+app.use('/api/v1', v1Routes);
+app.use('/api', v1Routes);
+app.use('/', v1Routes);
 
 // 404 Handler
 app.use((req: Request, res: Response) => {

@@ -26,9 +26,10 @@ const AttendanceRecordSchema = new Schema<IAttendanceRecord>(
     },
     status: {
       type: String,
-      enum: ['Present', 'Absent', 'Late'],
+      enum: ['Present', 'Absent', 'Late', 'present', 'absent', 'late'],
       required: true,
       default: 'Present',
+      set: (v: string) => (v ? v.charAt(0).toUpperCase() + v.slice(1).toLowerCase() : v),
     },
     remarks: {
       type: String,

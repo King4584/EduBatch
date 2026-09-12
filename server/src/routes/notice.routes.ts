@@ -13,6 +13,7 @@ import { createNoticeSchema, updateNoticeSchema } from '../validators/notice.sch
 const router = Router();
 
 router.get('/', authenticate, getNotices);
+router.get('/batch/:batchId', authenticate, getNotices);
 router.post(
   '/',
   authenticate,

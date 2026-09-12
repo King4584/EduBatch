@@ -87,7 +87,18 @@ const BatchSchema = new Schema<IBatch>(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
+
+// Virtual schedule object { days, startTime, endTime } per specification
+BatchSchema.virtual('schedule').get(function (this: IBatch) {
+  return {
+    days: this.scheduleDays,
+    startTime: this.startTime,
+    endTime: this.endTime,
+  };
+});
 
 export const Batch: Model<IBatch> = mongoose.model<IBatch>('Batch', BatchSchema);

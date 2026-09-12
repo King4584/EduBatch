@@ -1,4 +1,4 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { AuthRequest } from '../middleware/auth.middleware.js';
 import { Payment } from '../models/Payment.js';
@@ -14,8 +14,16 @@ import { ENV } from '../config/env.js';
 
 export const createOrder = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { batchId, enrollmentId } = req.body;
+    let { batchId, enrollmentId } = req.body;
     const studentId = req.user!.id;
+
+    if (!batchId && enrollmentId) {
+      const enrollment = await Enrollment.findById(enrollmentId);
+      if (!enrollment) {
+        throw ApiError.notFound('Enrollment record not found');
+      }
+      batchId = enrollment.batch.toString();
+    }
 
     const batch = await Batch.findById(batchId);
     if (!batch) {
@@ -66,7 +74,7 @@ export const createOrder = async (req: AuthRequest, res: Response, next: NextFun
 
 export const verifyPayment = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { razorpayOrderId, razorpayPaymentId, razorpaySignature, batchId, method = 'Razorpay Checkout' } = req.body;
+    let { razorpayOrderId, razorpayPaymentId, razorpaySignature, batchId, enrollmentId, method = 'Razorpay Checkout' } = req.body;
     const studentId = req.user!.id;
 
     // Verify cryptographic signature
@@ -79,9 +87,22 @@ export const verifyPayment = async (req: AuthRequest, res: Response, next: NextF
       throw ApiError.badRequest('Invalid payment signature verification failed');
     }
 
+    let targetBatchId = batchId;
+    let enrollment = enrollmentId ? await Enrollment.findById(enrollmentId) : null;
+    if (enrollment && !targetBatchId) {
+      targetBatchId = enrollment.batch.toString();
+    }
+
+    if (!targetBatchId) {
+      const existingPay = await Payment.findOne({ razorpayOrderId });
+      if (existingPay?.batch) {
+        targetBatchId = existingPay.batch.toString();
+      }
+    }
+
     // Find batch and student
     const [batch, student] = await Promise.all([
-      Batch.findById(batchId),
+      Batch.findById(targetBatchId),
       User.findById(studentId),
     ]);
 
@@ -94,7 +115,7 @@ export const verifyPayment = async (req: AuthRequest, res: Response, next: NextF
       const receiptNumber = `RCP-${Date.now().toString().slice(-6)}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
       payment = new Payment({
         student: studentId,
-        batch: batchId,
+        batch: targetBatchId,
         amount: batch.fee,
         currency: 'INR',
         razorpayOrderId,
@@ -109,16 +130,20 @@ export const verifyPayment = async (req: AuthRequest, res: Response, next: NextF
     payment.method = method;
 
     // Link or update enrollment
-    let enrollment = await Enrollment.findOne({ student: studentId, batch: batchId, isActive: true });
+    if (!enrollment) {
+      enrollment = await Enrollment.findOne({ student: studentId, batch: targetBatchId, isActive: true });
+    }
     if (!enrollment) {
       enrollment = await Enrollment.create({
         student: studentId,
-        batch: batchId,
+        batch: targetBatchId,
         paymentStatus: 'paid',
+        payment: payment._id as any,
         isActive: true,
       });
     } else {
       enrollment.paymentStatus = 'paid';
+      enrollment.payment = payment._id as any;
       await enrollment.save();
     }
 
@@ -275,3 +300,54 @@ export const getPaymentReceipt = async (req: AuthRequest, res: Response, next: N
     next(error);
   }
 };
+
+export const handleWebhook = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const signature = req.headers['x-razorpay-signature'] as string;
+    if (!signature) {
+      throw ApiError.badRequest('Missing x-razorpay-signature header');
+    }
+
+    const secret = ENV.RAZORPAY_WEBHOOK_SECRET;
+    const body = (req as any).rawBody ? (req as any).rawBody.toString('utf8') : JSON.stringify(req.body);
+    const expectedSignature = crypto.createHmac('sha256', secret).update(body).digest('hex');
+
+    if (expectedSignature !== signature) {
+      throw ApiError.badRequest('Invalid webhook signature');
+    }
+
+    const event = req.body?.event;
+    if (event === 'payment.captured' || event === 'order.paid') {
+      const paymentEntity = req.body?.payload?.payment?.entity;
+      const orderId = paymentEntity?.order_id;
+      const paymentId = paymentEntity?.id;
+
+      if (orderId) {
+        const payment = await Payment.findOne({ razorpayOrderId: orderId });
+        if (payment && payment.status !== 'paid') {
+          payment.status = 'paid';
+          payment.razorpayPaymentId = paymentId;
+          payment.paidAt = new Date();
+          await payment.save();
+
+          if (payment.enrollment) {
+            await Enrollment.findByIdAndUpdate(payment.enrollment, {
+              paymentStatus: 'paid',
+              payment: payment._id,
+            });
+          } else if (payment.batch && payment.student) {
+            await Enrollment.findOneAndUpdate(
+              { student: payment.student, batch: payment.batch, isActive: true },
+              { paymentStatus: 'paid', payment: payment._id }
+            );
+          }
+        }
+      }
+    }
+
+    res.status(200).json({ status: 'ok' });
+  } catch (error) {
+    next(error);
+  }
+};
+

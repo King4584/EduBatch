@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import { User, IUser } from '../models/User.js';
 import { ApiError } from '../utils/apiError.js';
 import { sendResponse } from '../utils/apiResponse.js';
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../services/token.service.js';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken, verifyAccessToken } from '../services/token.service.js';
 import { sendPasswordResetEmail } from '../services/email.service.js';
 import { AuthRequest } from '../middleware/auth.middleware.js';
 import { ENV } from '../config/env.js';
@@ -17,11 +17,26 @@ export const register = async (req: Request, res: Response, next: NextFunction):
       throw ApiError.conflict('An account with this email address already exists');
     }
 
+    // Role enforcement per Page 10: "role forced to student unless admin creates"
+    let assignedRole: 'admin' | 'teacher' | 'student' = 'student';
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const decoded = verifyAccessToken(token);
+        if (decoded?.role === 'admin' && role && ['admin', 'teacher', 'student'].includes(role)) {
+          assignedRole = role;
+        }
+      } catch {
+        assignedRole = 'student';
+      }
+    }
+
     const user = await User.create({
       name,
       email,
       password,
-      role: role || 'student',
+      role: assignedRole,
       phone,
       city,
       institute: institute || 'EduBatch Learning Centre',

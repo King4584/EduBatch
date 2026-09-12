@@ -1,6 +1,8 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware.js';
 import { User } from '../models/User.js';
+import { Batch } from '../models/Batch.js';
+import { Enrollment } from '../models/Enrollment.js';
 import { ApiError } from '../utils/apiError.js';
 import { sendResponse } from '../utils/apiResponse.js';
 
@@ -9,6 +11,42 @@ export const getProfile = async (req: AuthRequest, res: Response, next: NextFunc
     const user = await User.findById(req.user!.id);
     if (!user) {
       throw ApiError.notFound('User not found');
+    }
+
+    let associatedBatches: any[] = [];
+    if (user.role === 'student') {
+      const enrollments = await Enrollment.find({ student: user._id, isActive: true })
+        .populate('batch', 'name subject scheduleDays startTime endTime status fee')
+        .lean();
+      associatedBatches = enrollments
+        .filter((e) => e.batch)
+        .map((e) => ({
+          id: (e.batch as any)._id,
+          name: (e.batch as any).name,
+          subject: (e.batch as any).subject,
+          scheduleDays: (e.batch as any).scheduleDays,
+          startTime: (e.batch as any).startTime,
+          endTime: (e.batch as any).endTime,
+          status: (e.batch as any).status,
+          fee: (e.batch as any).fee,
+          enrolledAt: e.enrolledAt,
+          paymentStatus: e.paymentStatus,
+        }));
+    } else if (user.role === 'teacher') {
+      const batches = await Batch.find({ teacher: user._id, status: { $ne: 'archived' } })
+        .select('name subject scheduleDays startTime endTime status capacity fee')
+        .lean();
+      associatedBatches = batches.map((b) => ({
+        id: b._id,
+        name: b.name,
+        subject: b.subject,
+        scheduleDays: b.scheduleDays,
+        startTime: b.startTime,
+        endTime: b.endTime,
+        status: b.status,
+        capacity: b.capacity,
+        fee: b.fee,
+      }));
     }
 
     sendResponse(res, 200, 'Profile retrieved', {
@@ -21,6 +59,7 @@ export const getProfile = async (req: AuthRequest, res: Response, next: NextFunc
       institute: user.institute || 'EduBatch Learning Centre',
       bio: user.bio || '',
       avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=6366f1&color=fff`,
+      associatedBatches,
     });
   } catch (error) {
     next(error);

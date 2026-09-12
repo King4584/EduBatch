@@ -23,29 +23,17 @@ export const seedDatabase = async () => {
       Notice.deleteMany({}),
     ]);
 
-    // Delete existing demo users to ensure clean slate with proper passwords
-    await User.deleteMany({
-      email: {
-        $in: [
-          'teacher@edubatch.com',
-          'rahul.gupta@edubatch.com',
-          'anita.verma@edubatch.com',
-          'vikram.singh@edubatch.com',
-          'student@edubatch.com',
-        ],
-      },
-    });
+    // Delete existing demo users (except admin) to ensure clean slate with proper passwords
+    await User.deleteMany({ email: { $ne: 'admin@edubatch.com' } });
 
     console.log('[Seeder] Setting up Admin User (Utsav Anand - admin@edubatch.com)...');
     // Ensure Admin Utsav Anand exists with correct credentials
     let admin = await User.findOne({ email: 'admin@edubatch.com' });
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash('Password@123', salt);
 
     if (admin) {
       admin.name = 'Utsav Anand';
       admin.role = 'admin';
-      admin.password = hashedPassword;
+      admin.password = 'Password@123';
       admin.phone = '+91 98765 43210';
       admin.city = 'Mumbai, Maharashtra';
       admin.institute = 'EduBatch Learning Centre';
@@ -121,10 +109,6 @@ export const seedDatabase = async () => {
     });
 
     console.log('[Seeder] Creating 25 Students...');
-    // Delete any previous demo students by email domain
-    await User.deleteMany({ email: { $regex: '@edubatch.com$', $nin: ['admin@edubatch.com'] } });
-
-    // Re-create demo teacher in case delete matched it
     const teachersList = [teacher1, teacher2, teacher3, teacher4];
 
     // Primary Demo Student

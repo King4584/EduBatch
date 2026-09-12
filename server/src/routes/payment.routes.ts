@@ -5,6 +5,7 @@ import {
   getPaymentHistory,
   getPaymentById,
   getPaymentReceipt,
+  handleWebhook,
 } from '../controllers/payment.controller.js';
 import { authenticate } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
@@ -12,6 +13,7 @@ import { createOrderSchema, verifyPaymentSchema } from '../validators/payment.sc
 
 const router = Router();
 
+router.post('/webhook', handleWebhook);
 router.post('/create-order', authenticate, validate(createOrderSchema), createOrder);
 router.post('/verify', authenticate, validate(verifyPaymentSchema), verifyPayment);
 router.get('/history', authenticate, getPaymentHistory);
