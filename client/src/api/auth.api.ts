@@ -2,7 +2,7 @@ import apiClient from './client';
 
 export interface UserProfile {
   id: string;
-  username: string;
+  name: string;
   email: string;
   role: 'admin' | 'teacher' | 'student';
   phone?: string;
@@ -17,7 +17,7 @@ export const authApi = {
     const res = await apiClient.post('/auth/login', credentials);
     return res.data;
   },
-  
+
   register: async (data: {
     name: string;
     email: string;
@@ -37,7 +37,7 @@ export const authApi = {
   },
 
   getMe: async () => {
-    const res = await apiClient.get('auth/me');
+    const res = await apiClient.get('/auth/me');
     return res.data;
   },
 
@@ -51,4 +51,3 @@ export const authApi = {
     return res.data;
   },
 };
-
