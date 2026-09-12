@@ -30,6 +30,36 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
     window.print();
   };
 
+  const handleDownload = () => {
+    const printContent = document.getElementById('receipt-content');
+    if (!printContent) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Receipt-${receiptData.receiptNumber}</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+          <style>
+            body { font-family: 'Plus Jakarta Sans', sans-serif; padding: 40px; background: #fff; }
+            @media print { button { display: none !important; } }
+          </style>
+        </head>
+        <body>
+          <div class="max-w-2xl mx-auto">
+            ${printContent.innerHTML}
+          </div>
+          <script>
+            setTimeout(() => { window.print(); }, 350);
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   return (
     <Modal open={open} onClose={onClose} title="Fee Payment Receipt" size="lg">
       <div id="receipt-content" className="space-y-6">
@@ -134,13 +164,23 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
           </p>
           <div className="flex gap-2">
             <button
+              type="button"
+              onClick={handleDownload}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors"
+            >
+              <Download size={14} />
+              <span>Download Invoice</span>
+            </button>
+            <button
+              type="button"
               onClick={handlePrint}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors"
             >
               <Printer size={14} />
-              <span>Print Receipt</span>
+              <span>Print</span>
             </button>
             <button
+              type="button"
               onClick={onClose}
               className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors"
             >

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Mail, Phone, MapPin, Building, Lock, Save, KeyRound, Check } from 'lucide-react';
+import { Camera, Mail, Phone, MapPin, Building, Lock, Save, KeyRound, Check, BookOpen } from 'lucide-react';
 import Modal from '../../components/Modal';
 import { profileApi } from '../../api/profile.api';
 import { useAuth } from '../../hooks/useAuth';
@@ -9,6 +9,7 @@ export const ProfilePage: React.FC = () => {
   const { user, updateUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [associatedBatches, setAssociatedBatches] = useState<any[]>([]);
 
   // Avatar Modal State
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
@@ -41,6 +42,15 @@ export const ProfilePage: React.FC = () => {
       });
       setAvatarUrl(user.avatar || '');
     }
+
+    profileApi
+      .getProfile()
+      .then((res) => {
+        if (res?.data?.associatedBatches) {
+          setAssociatedBatches(res.data.associatedBatches);
+        }
+      })
+      .catch(() => {});
   }, [user]);
 
   const handleSaveProfile = async () => {
@@ -243,6 +253,78 @@ export const ProfilePage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Enrolled Batches (Student) or Assigned Batches (Teacher) Card */}
+      {(user?.role === 'student' || user?.role === 'teacher') && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <BookOpen size={17} className="text-indigo-600" />
+              <h3 className="font-display font-600 text-slate-800 text-sm">
+                {user.role === 'student' ? 'Enrolled Batches' : 'Assigned Teaching Batches'}
+              </h3>
+            </div>
+            <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
+              {associatedBatches.length} {associatedBatches.length === 1 ? 'Batch' : 'Batches'}
+            </span>
+          </div>
+
+          {associatedBatches.length === 0 ? (
+            <p className="text-xs text-slate-400 py-4 text-center">
+              {user.role === 'student'
+                ? 'No active batch enrollments found.'
+                : 'No batches currently assigned to you.'}
+            </p>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-3">
+              {associatedBatches.map((b: any, idx: number) => (
+                <div
+                  key={b.id || idx}
+                  className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-display font-700 text-xs text-slate-800 truncate">
+                      {b.name}
+                    </h4>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${
+                        b.status === 'active'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                      }`}
+                    >
+                      {b.status || 'Active'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-indigo-600 font-medium mt-0.5">
+                    {b.subject}
+                  </p>
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200/60 text-[10px] text-slate-500">
+                    <span>
+                      {Array.isArray(b.scheduleDays) ? b.scheduleDays.join(', ') : 'Mon, Wed, Fri'}
+                    </span>
+                    <span>
+                      {b.startTime} - {b.endTime}
+                    </span>
+                  </div>
+                  {user.role === 'student' && b.paymentStatus && (
+                    <div className="mt-1.5 flex items-center justify-between text-[10px]">
+                      <span className="text-slate-400">Payment Status</span>
+                      <span
+                        className={`font-semibold capitalize ${
+                          b.paymentStatus === 'paid' ? 'text-emerald-600' : 'text-amber-600'
+                        }`}
+                      >
+                        {b.paymentStatus}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Security & Password Card */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
