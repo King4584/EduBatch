@@ -1,239 +1,300 @@
 # EduBatch – Education Batch Management Platform
 
-EduBatch is a production-ready, full-stack SaaS platform designed for coaching institutes, coding bootcamps, tuition centers, and educational organizations to streamline batch scheduling, student enrollments, attendance registers, fee collection with Razorpay, instant receipt generation, and role-based analytics.
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React 18](https://img.shields.io/badge/React_18-20232A?style=flat-square&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Node.js](https://img.shields.io/badge/Node.js-43853D?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Express.js](https://img.shields.io/badge/Express.js-000000?style=flat-square&logo=express&logoColor=white)](https://expressjs.com/)
+[![MongoDB Atlas](https://img.shields.io/badge/MongoDB_Atlas-4EA94B?style=flat-square&logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
+[![Razorpay](https://img.shields.io/badge/Razorpay-02042B?style=flat-square&logo=razorpay&logoColor=3395FF)](https://razorpay.com/)
+
+**EduBatch** is a production-ready, full-stack SaaS platform architected for coaching institutes, coding bootcamps, tuition centers, and educational organizations to streamline batch scheduling, student enrollments, capacity enforcement, date-wise attendance registers, Razorpay fee collections, instant invoice receipt generation, and role-based real-time analytics.
 
 ---
 
-## 🌟 Key Highlights & Architecture
+## 🌐 Live Deployments
 
-- **Three-Tier Architecture**:
-  - **Frontend**: React 18 SPA built with Vite, Tailwind CSS, React Router v6, Axios interceptors, React Hook Form, Zod validation, and Recharts.
-  - **Backend**: Node.js & Express REST API with TypeScript, Controller-Service-Repository pattern, centralized error handling, and robust security middleware.
-  - **Database**: MongoDB with Mongoose ODM, optimized compound indexes, and relational population.
-- **Enterprise RBAC (Role-Based Access Control)**:
-  - **Admin**: Create teachers, students, manage all batches, enrollments, view all payments & revenue charts, manage notices and attendance.
-  - **Teacher**: View assigned batches, mark student attendance, create batch-specific and global announcements, view student rosters.
-  - **Student**: View enrolled courses, track attendance percentages, execute Razorpay tuition fee payments, and download/print official receipts.
-- **Payment Lifecycle**:
-  - Integrated with **Razorpay** SDK for cryptographic order generation and HMAC-SHA256 signature verification.
-  - Generates itemized tax receipts and triggers HTML receipt emails using **Nodemailer**.
-  - Built-in sandbox testing fallback allows complete testing without live merchant keys.
+- **Frontend Application (Vercel)**: [https://edubatch-seven.vercel.app](https://edubatch-seven.vercel.app)
+- **Backend REST API (Render)**: [https://edubatch-api.onrender.com](https://edubatch-api.onrender.com)
+- **API Health Check**: [https://edubatch-api.onrender.com/api/v1/health](https://edubatch-api.onrender.com/api/v1/health)
 
 ---
 
-## 🚀 Demo Credentials
+## 🔑 Verified Demo Credentials
 
-The database seeder automatically creates the following accounts:
+The database comes pre-seeded with genuine production data:
 
-| Role | Email | Password | Access Level |
+| Role | Email | Password | Name / Faculty Details |
 | :--- | :--- | :--- | :--- |
-| **Admin** | `admin@edubatch.com` | `Password@123` | Full Administrative & Analytics Access |
-| **Teacher** | `teacher@edubatch.com` | `Password@123` | Faculty Access (Dr. Priya Sharma) |
-| **Student** | `student@edubatch.com` | `Password@123` | Student Portal (Aarav Mehta) |
+| **Admin** | `admin@edubatch.com` | `Password@123` | **Utsav Anand** (Super Administrator) |
+| **Teacher** | `teacher@edubatch.com` | `Password@123` | **Dr. Priya Sharma** (Physics & Math Faculty) |
+| **Student** | `student@edubatch.com` | `Password@123` | **Aarav Mehta** (Enrolled Student) |
 
-> **Note**: The login screen features a **1-Click Demo Fill** button to instantly authenticate as any role for testing.
+> 💡 **Quick Login**: The login screen features a **1-Click Demo Fill** button to instantly authenticate as Admin, Teacher, or Student.
 
 ---
 
-## 📁 Project Structure
+## 🌟 Key Features & Capabilities
+
+### 1. Multi-Tier Role-Based Access Control (RBAC)
+- **Admin**:
+  - Full institute administration, batch creation, teacher assignment, capacity management.
+  - Comprehensive revenue metrics, monthly breakdown charts, batch distribution graphs.
+  - Institute-wide student and faculty management.
+- **Teacher**:
+  - View assigned batches, student rosters, and course schedules.
+  - Date-wise attendance marking with `Present`, `Absent`, and `Late` status options.
+  - Publish batch-specific or institute-wide announcements.
+  - Enroll and remove students within their assigned batches.
+- **Student**:
+  - View enrolled courses, upcoming class schedules, and teacher contacts.
+  - Personal attendance percentage tracking with attendance history.
+  - In-app **Razorpay Checkout** for tuition fee payments.
+  - Download official HTML/PDF fee receipts or print directly.
+
+### 2. Batch Lifecycle & Capacity Enforcement
+- Strict capacity checks reject new enrollments when `active_enrollments >= capacity`.
+- Lifecycle status progression: `upcoming` ➔ `active` ➔ `archived`.
+- Archived batches are automatically locked against new enrollments.
+- Flexible schedules supporting custom weekly days, start times, and end times.
+
+### 3. Fee Processing & Razorpay Integration
+- Server-side order creation using Razorpay Node SDK.
+- Flexible order creation accepting either `batchId` or `enrollmentId`.
+- Server-side cryptographic HMAC-SHA256 signature verification.
+- Bi-directional reference linking between `Enrollment` and `Payment` records.
+- Asynchronous Razorpay webhook endpoint (`POST /api/v1/payments/webhook`) with raw body signature checks.
+- Email delivery of branded payment receipts via Nodemailer.
+
+### 4. Dynamic Dashboards (Zero Hardcoded Data)
+- Every metric, chart, and counter queries live MongoDB aggregations.
+- Zero static fallbacks or dummy mock numbers in dashboards.
+
+---
+
+## 📁 Repository Architecture
 
 ```
 edubatch/
-├── client/                     # Frontend SPA (React 18 + Vite + Tailwind CSS)
+├── client/                         # Frontend React 18 SPA (Vite + TypeScript)
 │   ├── src/
-│   │   ├── api/                # Typed Axios API clients (auth, batches, payments, etc.)
-│   │   ├── components/         # Modals, Toast, Sidebar, Navbar, StatCard, Checkout
-│   │   ├── context/            # AuthContext with token refresh and demo login
-│   │   ├── hooks/              # Custom React hooks (useAuth)
-│   │   ├── layouts/            # DashboardLayout & AuthLayout
+│   │   ├── api/                    # Typed Axios API client with token refresh & auto-normalization
+│   │   ├── components/             # Modal, ReceiptModal, Toast, StatCard, Navbar, Sidebar
+│   │   ├── context/                # AuthContext (JWT lifecycle, login, logout, demo fill)
+│   │   ├── hooks/                  # Custom hooks (useAuth)
+│   │   ├── layouts/                # DashboardLayout & AuthLayout
 │   │   ├── pages/
-│   │   │   ├── auth/           # Login, Register, Forgot Password, Reset Password
-│   │   │   ├── dashboard/      # Admin, Teacher, and Student role dashboards
-│   │   │   ├── batches/        # Batch directory & Batch Details page
-│   │   │   ├── students/       # Student management & directory
-│   │   │   ├── enrollments/    # Capacity cards & enrollment workflows
-│   │   │   ├── payments/       # Fee history, Razorpay checkout, Receipt printer
-│   │   │   ├── attendance/     # Daily register, bulk marking, presence stats
-│   │   │   ├── notices/        # Pinned notices, announcements, category tags
-│   │   │   ├── profile/        # Personal details & password change
-│   │   │   └── settings/       # Localization & notification preferences
-│   │   ├── utils/              # INR currency & date formatters
-│   │   ├── App.tsx             # React Router v6 tree
+│   │   │   ├── auth/               # Login, Register, Forgot Password, Reset Password
+│   │   │   ├── dashboard/          # Role-specific Dashboards (Admin, Teacher, Student)
+│   │   │   ├── batches/            # Batch roster & details
+│   │   │   ├── students/           # Student directory & management
+│   │   │   ├── enrollments/        # Capacity meters & batch enrollment modals
+│   │   │   ├── payments/           # Financial counters, payment history, receipt generator
+│   │   │   ├── attendance/         # Attendance register, bulk marking, presence stats
+│   │   │   ├── notices/            # Pinned notices, category badges, authoring modal
+│   │   │   └── profile/            # Profile editor, enrolled/assigned batches, password change
+│   │   ├── utils/                  # Currency (INR) and date formatters
+│   │   ├── App.tsx                 # Protected routes & role guards
 │   │   └── main.tsx
+│   ├── vercel.json                 # Vercel SPA rewrites & security headers
 │   ├── package.json
 │   └── vite.config.ts
 │
-├── server/                     # Backend REST API (Node.js + Express + TypeScript)
+├── server/                         # Backend REST API (Node.js + Express + TypeScript)
 │   ├── src/
-│   │   ├── config/             # DB connection and validated environment variables
-│   │   ├── controllers/        # Auth, Batch, Enrollment, Payment, Attendance, Notices
-│   │   ├── middleware/         # JWT Auth, RBAC Role guard, Zod validator, Rate limiters
-│   │   ├── models/             # Mongoose schemas (User, Batch, Enrollment, Payment, Attendance, Notice)
-│   │   ├── routes/             # Express v1 modular routes
-│   │   ├── seed/               # Database seeder (5 batches, 25 students, 4 teachers)
-│   │   ├── services/           # Razorpay, Nodemailer, Token, and PDF services
-│   │   ├── utils/              # Standardized API response and ApiError handlers
-│   │   ├── validators/         # Zod schemas for all request payloads
-│   │   └── server.ts           # Express server entry point
+│   │   ├── config/                 # MongoDB connection & validated environment config
+│   │   ├── controllers/            # Auth, Batch, Enrollment, Payment, Attendance, Notice, Profile
+│   │   ├── middleware/             # JWT auth, RBAC role guard, Zod validator, rate limiters
+│   │   ├── models/                 # Mongoose schemas: User, Batch, Enrollment, Payment, Attendance, Notice
+│   │   ├── routes/                 # Modular API routes
+│   │   ├── seed/                   # Production database seeder (4 teachers, 25 students, 5 batches)
+│   │   ├── services/               # Razorpay, Nodemailer, Token, and PDF receipt services
+│   │   ├── utils/                  # Unified API response & ApiError classes
+│   │   ├── validators/             # Zod validation schemas
+│   │   └── server.ts               # Server bootstrap, multi-prefix route mounting, CORS
 │   ├── package.json
 │   └── tsconfig.json
 │
-├── postman/                    # Postman collection for all API endpoints
+├── docs/                           # Detailed Technical Documentation Package
+│   ├── ARCHITECTURE.md             # System architecture & Clean Architecture data flow
+│   ├── API_SPECIFICATION.md        # Complete REST API endpoint reference
+│   ├── DATABASE_DESIGN.md          # Entity-Relationship diagram & schema definitions
+│   ├── DEPLOYMENT_GUIDE.md         # Production runbooks for Vercel, Render, and Atlas
+│   ├── TESTING_CHECKLIST.md        # QA verification matrix across all features
+│   └── ROADMAP.md                  # Product roadmap for v1.1, v1.2, and v2.0
+│
+├── postman/                        # Postman Collection
 │   └── EduBatch_API.postman_collection.json
-├── .env.example
-├── vercel.json                 # Frontend deployment configuration
-├── render.yaml                 # Backend deployment configuration
+├── render.yaml                     # Render Infrastructure-as-Code blueprint
+├── vercel.json                     # Root Vercel SPA routing
 └── README.md
 ```
 
 ---
 
-## 🛠️ Local Installation & Development
+## 🛠️ Local Development & Setup
 
 ### 1. Prerequisites
-- Node.js `v18+` or `v20+` installed
-- MongoDB installed locally OR a free MongoDB Atlas connection URI
+- **Node.js**: `v18.0.0` or higher
+- **MongoDB**: Local MongoDB instance OR MongoDB Atlas cluster URI
+- **Git**
 
-### 2. Configure Environment Variables
-Copy `.env.example` into `server/.env`:
-```bash
-cp .env.example server/.env
-```
-Default parameters in `server/.env`:
+### 2. Configure Environment Files
+
+#### Backend (`server/.env`):
 ```ini
 PORT=5000
 NODE_ENV=development
-MONGO_URI=mongodb://localhost:27017/edubatch
-JWT_SECRET=your_jwt_secret_key_here
-REFRESH_TOKEN_SECRET=your_refresh_token_secret_here
+MONGO_URI=mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/test?retryWrites=true&w=majority
+JWT_SECRET=your_jwt_secret_64_characters_long
+JWT_EXPIRES_IN=15m
+REFRESH_TOKEN_SECRET=your_refresh_token_secret_64_characters_long
+REFRESH_TOKEN_EXPIRES_IN=7d
 CLIENT_URL=http://localhost:5173
-RAZORPAY_KEY_ID=rzp_test_edubatch_demo_key
-RAZORPAY_KEY_SECRET=rzp_test_edubatch_demo_secret
+RAZORPAY_KEY_ID=rzp_test_your_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_secret
+RAZORPAY_WEBHOOK_SECRET=your_webhook_secret
+SMTP_HOST=smtp.ethereal.email
+SMTP_PORT=587
+SMTP_USER=your_smtp_user
+SMTP_PASS=your_smtp_pass
+SMTP_FROM=EduBatch Support <no-reply@edubatch.com>
 ```
 
-### 3. Backend Setup & Database Seeding
+> ⚠️ **MongoDB Atlas IP Whitelist Requirement**:  
+> If using MongoDB Atlas, make sure your IP is whitelisted. In the MongoDB Atlas Console, navigate to **Network Access** ➔ **Add IP Address** ➔ Select **Allow Access from Anywhere (`0.0.0.0/0`)** ➔ Click **Confirm**.
+
+#### Frontend (`client/.env`):
+```ini
+VITE_API_URL=http://localhost:5000/api/v1
+VITE_RAZORPAY_KEY_ID=rzp_test_your_key_id
+```
+
+### 3. Run Backend
 ```bash
 cd server
 npm install
 
-# Seed the database with demo users, 5 batches, 25 students, attendance, & notices
+# Seed the database with demo users, teachers, students, batches, attendance, & payments
 npm run seed
 
 # Start development server
 npm run dev
 ```
-The backend will run on `http://localhost:5000` with API root at `http://localhost:5000/api/v1`.
+Backend API will start on `http://localhost:5000` (API endpoint: `http://localhost:5000/api/v1`).
 
-### 4. Frontend Setup
-In a new terminal:
+### 4. Run Frontend
+In a separate terminal:
 ```bash
 cd client
 npm install
 npm run dev
 ```
-The client will launch at `http://localhost:5173`.
+Frontend will launch on `http://localhost:5173`.
 
 ---
 
-## 📡 API Documentation
+## 📡 REST API Reference
 
-### Base URL: `/api/v1`
+Base URL: `/api/v1` (also aliased at `/api` and `/` for seamless proxy compatibility)
 
-All responses follow the unified standard response format:
-```json
-{
-  "success": true,
-  "message": "Operation Successful",
-  "data": { ... }
-}
-```
-
-### Authentication (`/api/v1/auth`)
-- `POST /register`: Register user (`name`, `email`, `password`, `role`)
-- `POST /login`: Authenticate and obtain JWT access & refresh tokens
-- `POST /refresh-token`: Exchange valid refresh token for a new access token
-- `POST /logout`: Invalidate refresh token
-- `POST /forgot-password`: Dispatch password reset token
-- `POST /reset-password`: Set new password with token
-- `GET /me`: Get authenticated user profile and permissions
-
-### Batches (`/api/v1/batches`)
-- `GET /`: List batches (supports `search`, `status`, `page`, `limit`, `sort`)
-- `GET /:id`: Get batch details, enrolled students, and assigned faculty
-- `POST /`: Create batch (Admin only)
-- `PUT /:id`: Update batch (Admin only)
-- `DELETE /:id`: Archive batch (Admin only)
-- `PATCH /:id/status`: Update status (`active`, `upcoming`, `archived`)
-- `GET /teacher/my-batches`: Teacher views assigned batches
-
-### Enrollments (`/api/v1/enrollments`)
-- `POST /`: Enroll student into batch (Enforces capacity limits: rejects when `enrolled >= capacity`)
-- `GET /`: List all enrollments with student and batch details (Admin/Teacher)
-- `GET /my`: Student views their own active enrollments
-- `DELETE /:id`: Cancel/remove enrollment (Admin only)
-
-### Payments (`/api/v1/payments`)
-- `POST /create-order`: Create Razorpay order for tuition fee
-- `POST /verify`: Verify Razorpay signature, mark payment `paid`, update enrollment `paymentStatus = paid`, send email
-- `GET /history`: Get payment transaction history (Admin gets all, Student gets own)
-- `GET /:id`: Get payment details
-- `GET /:id/receipt`: Download or print formatted invoice receipt
-
-### Attendance (`/api/v1/attendance`)
-- `POST /`: Mark daily attendance for a batch (`Present`, `Absent`, `Late`)
-- `GET /batch/:id`: Get attendance history and student percentages for a batch
-- `GET /my`: Student retrieves own attendance statistics and session history
-
-### Notices (`/api/v1/notices`)
-- `GET /`: List notices with RBAC filtering (Admin: all, Teacher: assigned + global, Student: enrolled + global)
-- `POST /`: Publish notice with category and optional batch targeting
-- `PUT /:id`: Update notice
-- `DELETE /:id`: Delete notice
-
-### Analytics (`/api/v1/analytics`)
-- `GET /admin`: Complete institute analytics (revenue, attendance trend, enrollment chart)
-- `GET /teacher`: Teacher dashboard metrics and upcoming classes
-- `GET /student`: Student dashboard metrics and fee alerts
+| Module | Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **Auth** | `POST` | `/auth/register` | Public | Register student (Admin token required for other roles) |
+| | `POST` | `/auth/login` | Public | Authenticate user & return tokens |
+| | `GET` | `/auth/login` | Public | Status & usage information |
+| | `POST` | `/auth/refresh` | Public | Exchange refresh token for new access token |
+| | `POST` | `/auth/logout` | Auth | Invalidate refresh token |
+| | `POST` | `/auth/forgot-password` | Public | Send password reset token email |
+| | `POST` | `/auth/reset-password` | Public | Reset password with token |
+| | `GET` | `/auth/me` | Auth | Fetch authenticated user profile |
+| **Batches** | `GET` | `/batches` | Auth | List batches with search & status filters |
+| | `GET` | `/batches/:id` | Auth | Get batch details, roster, & teacher |
+| | `GET` | `/batches/teacher/my-batches` | Teacher | List batches assigned to teacher |
+| | `POST` | `/batches` | Admin | Create a new batch |
+| | `PUT` | `/batches/:id` | Admin | Update batch details |
+| | `DELETE` | `/batches/:id` | Admin | Archive batch |
+| | `PATCH` | `/batches/:id/status` | Admin | Update status (`upcoming`, `active`, `archived`) |
+| **Enrollments** | `POST` | `/enrollments` | Admin, Teacher | Enroll student (checks capacity) |
+| | `GET` | `/enrollments` | Admin, Teacher | List enrollments with filters |
+| | `GET` | `/enrollments/my` | Student | View student's own active enrollments |
+| | `DELETE` | `/enrollments/:id` | Admin, Teacher | Remove enrollment (`isActive: false`) |
+| **Payments** | `POST` | `/payments/create-order` | Student | Create Razorpay order (`batchId` or `enrollmentId`) |
+| | `POST` | `/payments/verify` | Student | Verify signature & mark payment completed |
+| | `POST` | `/payments/webhook` | Public | Razorpay webhook notification listener |
+| | `GET` | `/payments/history` | Admin, Student | List payments with filters |
+| | `GET` | `/payments/:id` | Admin, Student | Get payment record details |
+| | `GET` | `/payments/:id/receipt` | Admin, Student | Get receipt JSON or HTML invoice (`?format=html`) |
+| **Attendance** | `POST` | `/attendance` | Admin, Teacher | Mark batch attendance (`Present`, `Absent`, `Late`) |
+| | `GET` | `/attendance/:id` | Admin, Teacher | Get batch attendance sessions & student stats |
+| | `GET` | `/attendance/my` | Student | Get personal attendance summary & history |
+| | `GET` | `/attendance/student/:studentId` | Auth | Get attendance summary for specified student |
+| **Notices** | `GET` | `/notices` | Auth | List notices scoped to user role |
+| | `GET` | `/notices/batch/:batchId` | Auth | List notices for specific batch |
+| | `POST` | `/notices` | Admin, Teacher | Publish notice |
+| | `PUT` | `/notices/:id` | Admin, Author | Edit notice |
+| | `DELETE` | `/notices/:id` | Admin, Author | Delete notice |
+| **Analytics** | `GET` | `/analytics/admin` | Admin | Live revenue, attendance rate, & charts |
+| | `GET` | `/analytics/teacher` | Teacher | Assigned batches, students count, & schedule |
+| | `GET` | `/analytics/student` | Student | Enrolled batches, personal attendance %, & fees |
+| **Profile** | `GET` | `/profile` | Auth | Get profile with enrolled/assigned batches |
+| | `PUT` | `/profile` | Auth | Update personal profile details |
+| | `PUT` | `/profile/password` | Auth | Change password |
+| | `GET` | `/profile/users` | Admin, Teacher | User directory for batch assignment |
 
 ---
 
-## 🔒 Security Architecture
+## 🔒 Security & Best Practices
 
-1. **Helmet**: Secures HTTP response headers against clickjacking, XSS, and sniffing.
-2. **CORS**: Strict whitelisting of frontend client origin with credentials support.
-3. **bcryptjs**: Password salted hashing with 10+ rounds.
-4. **JWT Dual-Token System**: Short-lived access tokens (15m) paired with rotating refresh tokens (7d).
-5. **Rate Limiting**: `express-rate-limit` prevents brute-force login attempts (30 requests/15m) and protects all API endpoints.
-6. **Input Sanitization & Zod**: Every request payload is validated against strict Zod schemas before hitting controllers.
-7. **Razorpay HMAC-SHA256 Verification**: Payments are verified server-side using secret cryptographic signatures before any balance or status updates.
+1. **Stateless JWT Dual-Token Authentication**:
+   - Short-lived Access Tokens (15m) paired with rotating Refresh Tokens (7d).
+2. **Password Protection**:
+   - `bcryptjs` salted hashing with 10 rounds; pre-save hooks strictly guard against double-hashing.
+3. **HTTP Header Hardening**:
+   - `helmet` protects against clickjacking, XSS, MIME sniffing, and frame injection.
+4. **CORS Configuration**:
+   - Whitelists frontend domains and `.vercel.app` deployments with credentials enabled.
+5. **Rate Limiting**:
+   - Brute-force protection on authentication routes (30 requests per 15 minutes) and API endpoints.
+6. **Input Validation**:
+   - All request bodies are strictly validated at the router level via Zod schemas.
+7. **Payment Integrity**:
+   - Cryptographic HMAC-SHA256 signature verification guarantees tamper-proof payment processing.
 
 ---
 
-## ☁️ Deployment Instructions
+## 🚀 Production Deployment Guide
 
-### Frontend (Vercel)
-1. Push repository to GitHub.
-2. Link project in Vercel. Set **Root Directory** to `client`.
-3. Set **Framework Preset** to `Vite`.
-4. Add Environment Variable:
-   - `VITE_API_URL`: Your deployed backend URL (e.g. `https://edubatch-api.onrender.com/api/v1`).
-5. Deploy. `vercel.json` already contains single-page application rewrites.
-
-### Backend (Render / Railway)
-1. In Render, select **New Web Service** and link the repository.
-2. Set **Root Directory** to `server`.
+### Deploying Backend on Render
+1. Create a **New Web Service** linked to your repository.
+2. Root Directory: `server`
 3. Build Command: `npm install && npm run build`
 4. Start Command: `npm start`
 5. Configure Environment Variables:
-   - `MONGO_URI`: Your MongoDB Atlas cluster connection string
-   - `JWT_SECRET`: Random 64-character secret
-   - `REFRESH_TOKEN_SECRET`: Random 64-character secret
-   - `CLIENT_URL`: Your Vercel frontend URL
-   - `RAZORPAY_KEY_ID`: Your Razorpay Key ID
-   - `RAZORPAY_KEY_SECRET`: Your Razorpay Key Secret
-6. Run `npm run seed` via Render shell or locally pointing to the Atlas URI to populate seed data.
+   - `NODE_ENV`: `production`
+   - `PORT`: `10000`
+   - `MONGO_URI`: `mongodb+srv://...`
+   - `JWT_SECRET`: `<random_64_bytes>`
+   - `REFRESH_TOKEN_SECRET`: `<random_64_bytes>`
+   - `CLIENT_URL`: `https://edubatch-seven.vercel.app`
+   - `RAZORPAY_KEY_ID`: `<your_razorpay_key_id>`
+   - `RAZORPAY_KEY_SECRET`: `<your_razorpay_key_secret>`
+   - `RAZORPAY_WEBHOOK_SECRET`: `<your_razorpay_webhook_secret>`
+6. Deploy service.
+
+### Deploying Frontend on Vercel
+1. Create a **New Project** linked to your repository.
+2. Root Directory: `client`
+3. Framework Preset: `Vite`
+4. Build Command: `npm run build`
+5. Output Directory: `dist`
+6. Add Environment Variables:
+   - `VITE_API_URL`: `https://edubatch-api.onrender.com/api/v1`
+   - `VITE_RAZORPAY_KEY_ID`: `<your_razorpay_key_id>`
+7. Deploy project.
 
 ---
 
-## 🧪 Postman Collection
-Import `postman/EduBatch_API.postman_collection.json` into Postman to test all endpoints with pre-configured parameters and sample bodies.
+## 📄 License
+This project is licensed under the [MIT License](LICENSE).
