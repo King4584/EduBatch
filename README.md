@@ -171,27 +171,47 @@ VITE_API_URL=http://localhost:5000/api/v1
 VITE_RAZORPAY_KEY_ID=rzp_test_your_key_id
 ```
 
-### 3. Run Backend
+### 3. Install All Dependencies (No `cd` required!)
+> 💡 **Zero Directory Switching**: You **do NOT need to `cd` into `server` or `client`** to install dependencies or run commands. Thanks to the root monorepo configuration, you can install all npm packages for both the backend and frontend simultaneously with a single command from the project root:
 ```bash
-cd server
-npm install
+npm run install:all
+```
 
-# Seed the database with demo users, teachers, students, batches, attendance, & payments
+### 4. Seed the Database
+Populate the database with verified demo accounts, teachers, batches, enrollments, payments, and attendance without leaving the root directory:
+```bash
 npm run seed
-
-# Start development server
-npm run dev
 ```
-Backend API will start on `http://localhost:5000` (API endpoint: `http://localhost:5000/api/v1`).
 
-### 4. Run Frontend
-In a separate terminal:
+### 5. Start the Development Servers
+Open two terminals from the project root directory:
+
+**Terminal 1 (Backend API):**
 ```bash
-cd client
-npm install
-npm run dev
+npm run dev:server
 ```
-Frontend will launch on `http://localhost:5173`.
+*Backend runs on `http://localhost:5000` (API root: `http://localhost:5000/api/v1`)*
+
+**Terminal 2 (Frontend Client):**
+```bash
+npm run dev:client
+```
+*Frontend launches on `http://localhost:5173` with Hot Module Replacement (HMR)*
+
+---
+
+### 📦 Root Monorepo Scripts Reference
+
+All operations can be run directly from the root directory:
+
+| Script | Command | Description |
+| :--- | :--- | :--- |
+| `npm run install:all` | `npm --prefix server install && npm --prefix client install` | Installs dependencies for both server and client |
+| `npm run seed` | `npm --prefix server run seed` | Seeds MongoDB with complete production data |
+| `npm run dev:server` | `npm --prefix server run dev` | Starts Node.js/Express API in development mode |
+| `npm run dev:client` | `npm --prefix client run dev` | Starts Vite React client development server |
+| `npm run build:server` | `npm --prefix server run build` | Compiles backend TypeScript to `server/dist` |
+| `npm run build:client` | `npm --prefix client run build` | Builds optimized production bundle in `client/dist` |
 
 ---
 
@@ -261,38 +281,6 @@ Base URL: `/api/v1` (also aliased at `/api` and `/` for seamless proxy compatibi
    - All request bodies are strictly validated at the router level via Zod schemas.
 7. **Payment Integrity**:
    - Cryptographic HMAC-SHA256 signature verification guarantees tamper-proof payment processing.
-
----
-
-## 🚀 Production Deployment Guide
-
-### Deploying Backend on Render
-1. Create a **New Web Service** linked to your repository.
-2. Root Directory: `server`
-3. Build Command: `npm install && npm run build`
-4. Start Command: `npm start`
-5. Configure Environment Variables:
-   - `NODE_ENV`: `production`
-   - `PORT`: `10000`
-   - `MONGO_URI`: `mongodb+srv://...`
-   - `JWT_SECRET`: `<random_64_bytes>`
-   - `REFRESH_TOKEN_SECRET`: `<random_64_bytes>`
-   - `CLIENT_URL`: `https://edubatch-seven.vercel.app`
-   - `RAZORPAY_KEY_ID`: `<your_razorpay_key_id>`
-   - `RAZORPAY_KEY_SECRET`: `<your_razorpay_key_secret>`
-   - `RAZORPAY_WEBHOOK_SECRET`: `<your_razorpay_webhook_secret>`
-6. Deploy service.
-
-### Deploying Frontend on Vercel
-1. Create a **New Project** linked to your repository.
-2. Root Directory: `client`
-3. Framework Preset: `Vite`
-4. Build Command: `npm run build`
-5. Output Directory: `dist`
-6. Add Environment Variables:
-   - `VITE_API_URL`: `https://edubatch-api.onrender.com/api/v1`
-   - `VITE_RAZORPAY_KEY_ID`: `<your_razorpay_key_id>`
-7. Deploy project.
 
 ---
 
